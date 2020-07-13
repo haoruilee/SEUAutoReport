@@ -124,31 +124,41 @@ logs = []
 fopen = open("C2P.txt", "r")
 userlist = fopen.readlines()
 
-for i in range(len(userlist)):
-    cardnumber = info_analyse(userlist[i].strip("\n"), 0)
-    password = info_analyse(userlist[i].strip("\n"), 1)
-    case = info_analyse(userlist[i].strip("\n"), 2)
+localtime = time.localtime(time.time())
+set_minite = localtime.tm_min # 首次登陆的分钟时刻，代表以后每次在此分钟时刻打卡
+set_hour = localtime.tm_hour # 首次登陆的时钟时刻，代表以后每次在此时钟时刻打卡
+sleep_time = (set_hour+24-time.localtime(time.time()).tm_hour)*3600 + (set_minite-time.localtime(time.time()).tm_min)*60
+#长时间自动填表
+if set_hour > 9:
+        set_hour = 7 # 如果首次登录超过上午10点，则以后默认在7点钟打卡
+while True:
+    for i in range(len(userlist)):
+        cardnumber = info_analyse(userlist[i].strip("\n"), 0)
+        password = info_analyse(userlist[i].strip("\n"), 1)
+        case = info_analyse(userlist[i].strip("\n"), 2)
 
-    repoter = Browser(cardnumber, password)
-    try:
-        repoter.login()
-    except:
-        repoter.quit()
-        print(str(cardnumber) + " Failed: Wrong Password.")
-        logs.append(str(cardnumber) + " Failed: Wrong Password.")
-        continue
-    try:
-        repoter.daily_report()
-    except:
-        repoter.quit()
-        print(str(cardnumber) + " Failed: Has Reported.")
-        logs.append(str(cardnumber) + " Failed: Has Reported.")
-        continue
-    repoter.close()
+        repoter = Browser(cardnumber, password)
+        try:
+            repoter.login()
+        except:
+            repoter.quit()
+            print(str(cardnumber) + " Failed: Wrong Password.")
+            logs.append(str(cardnumber) + " Failed: Wrong Password.")
+            continue
+        try:
+            repoter.daily_report()
+        except:
+            repoter.quit()
+            print(str(cardnumber) + " Failed: Has Reported.")
+            logs.append(str(cardnumber) + " Failed: Has Reported.")
+            continue
+        repoter.close()
 
-    print(str(cardnumber) + " Success.")
-    logs.append(str(cardnumber) + " Success.")
+        print(str(cardnumber) + " Success.")
+        logs.append(str(cardnumber) + " Success.")
 
-print("Logs:")
-for log in logs:
-    print(log)
+    print("Logs:")
+    for log in logs:
+        print(log)
+    print("下次打卡时间：明天" + str(set_hour) + ':' + str(set_minite) + "，" + "即" + str(sleep_time) + 's后')
+    time.sleep(sleep_time)
